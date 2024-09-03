@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
 import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -21,6 +22,8 @@ import java.io.IOException
 class MainActivity : AppCompatActivity(), LocationListener {
 
     private lateinit var locationManager: LocationManager
+    private lateinit var latitudeTextView: TextView  // Added to display latitude
+    private lateinit var longitudeTextView: TextView // Added to display longitude
     private val client = OkHttpClient()
     private var isTracking = false
 
@@ -29,6 +32,9 @@ class MainActivity : AppCompatActivity(), LocationListener {
         setContentView(R.layout.activity_main)
 
         locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
+
+        latitudeTextView = findViewById(R.id.latitudeTextView)   // Initialized TextView for latitude
+        longitudeTextView = findViewById(R.id.longitudeTextView) // Initialized TextView for longitude
 
         val shareLocationButton = findViewById<Button>(R.id.shareLocationButton)
         shareLocationButton.setOnClickListener {
@@ -106,8 +112,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
     }
 
     private fun sendLocationToServer(location: Location) {
-        val url = "http://192.168.0.180:3000/update-location"
-        // val url = "http://your-computer-ip:3000/update-location" // Use this when testing with a physical device
+        val url = "http://ec2-13-127-240-218.ap-south-1.compute.amazonaws.com:8080/update-location"
         val requestBody = FormBody.Builder()
             .add("latitude", location.latitude.toString())
             .add("longitude", location.longitude.toString())
@@ -118,23 +123,19 @@ class MainActivity : AppCompatActivity(), LocationListener {
             .post(requestBody)
             .build()
 
+        Log.d("MainActivity", "Sending location: lat=${location.latitude}, lon=${location.longitude}")
+
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 Log.e("MainActivity", "Failed to send location", e)
-                runOnUiThread {
-                    Toast.makeText(this@MainActivity, "Failed to send location: ${e.message}", Toast.LENGTH_LONG).show()
-                }
             }
 
             override fun onResponse(call: Call, response: Response) {
-                response.use {
-                    val responseBody = response.body?.string()
-                    Log.d("MainActivity", "Response: $responseBody")
-                    if (!response.isSuccessful) {
-                        Log.e("MainActivity", "Unexpected code $response")
-                    } else {
-                        Log.d("MainActivity", "Location sent successfully")
-                    }
+                Log.d("MainActivity", "Server response: ${response.body?.string()}")
+                if (!response.isSuccessful) {
+                    Log.e("MainActivity", "Unexpected code $response")
+                } else {
+                    Log.d("MainActivity", "Location sent successfully")
                 }
             }
         })
@@ -164,6 +165,8 @@ class MainActivity : AppCompatActivity(), LocationListener {
     }
 
     override fun onLocationChanged(location: Location) {
+        latitudeTextView.text = "Latitude: ${location.latitude}"  // Update latitude TextView
+        longitudeTextView.text = "Longitude: ${location.longitude}" // Update longitude TextView
         sendLocationToServer(location)
     }
 

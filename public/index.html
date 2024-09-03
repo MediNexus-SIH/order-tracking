@@ -14,7 +14,7 @@
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script> <!-- Corrected Socket.IO inclusion -->
     <script>
         const map = L.map('map').setView([0, 0], 2);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -23,7 +23,7 @@
 
         let marker;
 
-        const socket = io();
+        const socket = io('http://ec2-13-127-240-218.ap-south-1.compute.amazonaws.com:8080');
 
         socket.on('locationUpdate', (location) => {
             updateMap(location);
@@ -40,7 +40,7 @@
         }
 
         // Fetch last known location on page load
-        fetch('/last-location')
+        fetch('http://ec2-13-127-240-218.ap-south-1.compute.amazonaws.com:8080/last-location')
             .then(response => response.json())
             .then(location => {
                 if (location) {
