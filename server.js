@@ -8,7 +8,14 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
-// Use CORS middleware
+const corsOptions = {
+  origin: "https://medinexus.vercel.app", 
+  methods: ["GET", "POST"],
+  credentials: true, 
+};
+
+app.use(cors(corsOptions));
+
 app.use(cors());
 
 // Parse JSON and URL-encoded data
